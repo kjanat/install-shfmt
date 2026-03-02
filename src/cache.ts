@@ -1,6 +1,6 @@
-import { join } from "node:path";
-import { existsSync, mkdirSync, cpSync, writeFileSync } from "node:fs";
-import { arch } from "node:os";
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { arch } from 'node:os';
+import { join } from 'node:path';
 
 /**
  * Minimal tool-cache compatible with @actions/tool-cache layout.
@@ -13,14 +13,14 @@ import { arch } from "node:os";
  */
 
 function cacheRoot(): string {
-	const dir = process.env["RUNNER_TOOL_CACHE"];
-	if (!dir) throw new Error("RUNNER_TOOL_CACHE is not set");
+	const dir = process.env['RUNNER_TOOL_CACHE'];
+	if (!dir) throw new Error('RUNNER_TOOL_CACHE is not set');
 	return dir;
 }
 
 /** Strip leading "v" to match semver-clean behavior. */
 function cleanVersion(version: string): string {
-	return version.startsWith("v") ? version.slice(1) : version;
+	return version.startsWith('v') ? version.slice(1) : version;
 }
 
 /**
@@ -34,7 +34,7 @@ export function findCached(tool: string, version: string): string {
 	if (existsSync(cachePath) && existsSync(`${cachePath}.complete`)) {
 		return cachePath;
 	}
-	return "";
+	return '';
 }
 
 /**
@@ -51,7 +51,7 @@ export function cacheDir(
 
 	mkdirSync(destPath, { recursive: true });
 	cpSync(sourceDir, destPath, { recursive: true });
-	writeFileSync(`${destPath}.complete`, "");
+	writeFileSync(`${destPath}.complete`, '');
 
 	return destPath;
 }

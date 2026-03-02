@@ -1,17 +1,12 @@
-import { join } from "node:path";
-import {
-	mkdirSync,
-	createWriteStream,
-	chmodSync,
-	unlinkSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import { get } from "node:https";
-import { execFileSync } from "node:child_process";
-import { info, addPath, setOutput } from "./actions.ts";
-import { getPlatform } from "./platform.ts";
-import { resolveVersion } from "./version.ts";
-import { findCached, cacheDir } from "./cache.ts";
+import { execFileSync } from 'node:child_process';
+import { chmodSync, createWriteStream, mkdirSync, unlinkSync } from 'node:fs';
+import { get } from 'node:https';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { addPath, info, setOutput } from './actions.ts';
+import { cacheDir, findCached } from './cache.ts';
+import { getPlatform } from './platform.ts';
+import { resolveVersion } from './version.ts';
 
 const MAX_RETRIES = 3;
 
@@ -44,19 +39,19 @@ function downloadAttempt(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const request = (href: string, redirects = 0) => {
 			if (redirects > 10) {
-				reject(new Error("Too many redirects"));
+				reject(new Error('Too many redirects'));
 				return;
 			}
 
 			get(
 				href,
-				{ headers: { "User-Agent": "install-shfmt-action" } },
+				{ headers: { 'User-Agent': 'install-shfmt-action' } },
 				(res) => {
 					if (
-						res.statusCode &&
-						res.statusCode >= 300 &&
-						res.statusCode < 400 &&
-						res.headers.location
+						res.statusCode
+						&& res.statusCode >= 300
+						&& res.statusCode < 400
+						&& res.headers.location
 					) {
 						res.resume();
 						request(res.headers.location, redirects + 1);
@@ -74,12 +69,12 @@ function downloadAttempt(url: string, dest: string): Promise<void> {
 					}
 
 					const file = createWriteStream(dest);
-					res.on("error", reject);
+					res.on('error', reject);
 					res.pipe(file);
-					file.on("finish", () => file.close(() => resolve()));
-					file.on("error", reject);
+					file.on('finish', () => file.close(() => resolve()));
+					file.on('error', reject);
 				},
-			).on("error", reject);
+			).on('error', reject);
 		};
 
 		request(url);
@@ -98,17 +93,17 @@ export async function installShfmt(versionInput: string): Promise<{
 	const { os: osName, arch } = getPlatform();
 	info(`Detected platform: ${osName}_${arch}`);
 
-	const ext = osName === "windows" ? ".exe" : "";
+	const ext = osName === 'windows' ? '.exe' : '';
 	const binaryName = `shfmt${ext}`;
 
 	// Check tool-cache first
-	const cachedDir = findCached("shfmt", version);
+	const cachedDir = findCached('shfmt', version);
 	if (cachedDir) {
 		info(`Cache hit: shfmt ${version} from tool-cache`);
 		return finalize(join(cachedDir, binaryName), version, true);
 	}
 
-	info("Cache miss: downloading shfmt");
+	info('Cache miss: downloading shfmt');
 
 	const assetName = `shfmt_${version}_${osName}_${arch}${ext}`;
 	const url = `https://github.com/mvdan/sh/releases/download/${version}/${assetName}`;
@@ -120,11 +115,11 @@ export async function installShfmt(versionInput: string): Promise<{
 	const tempBinary = join(tempDir, binaryName);
 	await download(url, tempBinary);
 
-	if (osName !== "windows") {
+	if (osName !== 'windows') {
 		chmodSync(tempBinary, 0o755);
 	}
 
-	const toolDir = cacheDir(tempDir, "shfmt", version);
+	const toolDir = cacheDir(tempDir, 'shfmt', version);
 	return finalize(join(toolDir, binaryName), version, false);
 }
 
@@ -134,15 +129,15 @@ function finalize(
 	resolvedVersion: string,
 	cacheHit: boolean,
 ): { version: string; location: string; cacheHit: boolean } {
-	addPath(join(binaryPath, ".."));
+	addPath(join(binaryPath, '..'));
 
-	const actualVersion = execFileSync(binaryPath, ["--version"], {
-		encoding: "utf8",
+	const actualVersion = execFileSync(binaryPath, ['--version'], {
+		encoding: 'utf8',
 	}).trim();
 
-	setOutput("version", actualVersion);
-	setOutput("location", binaryPath);
-	setOutput("cache-hit", cacheHit);
+	setOutput('version', actualVersion);
+	setOutput('location', binaryPath);
+	setOutput('cache-hit', cacheHit);
 
 	info(`shfmt ${actualVersion} ready at ${binaryPath}`);
 

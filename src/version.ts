@@ -1,4 +1,4 @@
-import { get } from "node:https";
+import { get } from 'node:https';
 
 /**
  * Resolve a version input to an actual shfmt release tag.
@@ -8,34 +8,34 @@ import { get } from "node:https";
  */
 export async function resolveVersion(input: string): Promise<string> {
 	const trimmed = input.trim();
-	if (trimmed !== "" && trimmed.toLowerCase() !== "latest") {
-		return trimmed.startsWith("v") ? trimmed : `v${trimmed}`;
+	if (trimmed !== '' && trimmed.toLowerCase() !== 'latest') {
+		return trimmed.startsWith('v') ? trimmed : `v${trimmed}`;
 	}
 
 	const location = await new Promise<string>((resolve, reject) => {
 		get(
-			"https://github.com/mvdan/sh/releases/latest",
-			{ headers: { "User-Agent": "install-shfmt-action" } },
+			'https://github.com/mvdan/sh/releases/latest',
+			{ headers: { 'User-Agent': 'install-shfmt-action' } },
 			(res) => {
 				// Consume body to free socket
 				res.resume();
 
 				const loc = res.headers.location;
-				if (typeof loc === "string" && loc.length > 0) {
+				if (typeof loc === 'string' && loc.length > 0) {
 					resolve(loc);
 				} else {
 					reject(
 						new Error(
-							"Failed to resolve latest shfmt version: no redirect from GitHub releases",
+							'Failed to resolve latest shfmt version: no redirect from GitHub releases',
 						),
 					);
 				}
 			},
-		).on("error", reject);
+		).on('error', reject);
 	});
 
 	// Location: https://github.com/mvdan/sh/releases/tag/v3.12.0
-	const tag = location.split("/").pop();
+	const tag = location.split('/').pop();
 	if (!tag) {
 		throw new Error(
 			`Failed to parse version tag from redirect: ${location}`,

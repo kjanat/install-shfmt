@@ -7,8 +7,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "bun build src/main.ts --outfile dist/main.mjs --format esm --minify --target node",
-		"typecheck": "tsc --noEmit",
-		"fmt": "dprint fmt"
+		"fmt": "dprint fmt",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@types/node": "^25.2.3",

@@ -1,23 +1,23 @@
-import { platform, arch } from "node:os";
+import { arch, platform } from 'node:os';
 
 /** OS names used in shfmt release asset naming. */
-type ShfmtOS = "darwin" | "linux" | "windows";
+type ShfmtOS = 'darwin' | 'linux' | 'windows';
 /** Arch names used in shfmt release asset naming. */
-type ShfmtArch = "amd64" | "arm64" | "386" | "arm";
+type ShfmtArch = 'amd64' | 'arm64' | '386' | 'arm';
 
 export type Platform = { readonly os: ShfmtOS; readonly arch: ShfmtArch };
 
 const osMap: Record<string, ShfmtOS> = {
-	darwin: "darwin",
-	linux: "linux",
-	win32: "windows",
+	darwin: 'darwin',
+	linux: 'linux',
+	win32: 'windows',
 };
 
 const archMap: Record<string, ShfmtArch> = {
-	x64: "amd64",
-	arm64: "arm64",
-	ia32: "386",
-	arm: "arm",
+	x64: 'amd64',
+	arm64: 'arm64',
+	ia32: '386',
+	arm: 'arm',
 };
 
 /** Map Node.js platform/arch to shfmt release naming. */

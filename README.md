@@ -62,4 +62,4 @@ jobs:
 <!-- links -->
 
 [shfmt]: https://github.com/mvdan/sh "mvdan/sh on GitHub"
-[MIT]: https://github.com/kjanat/install-shfmt/blob/main/LICENSE
+[MIT]: https://github.com/kjanat/install-shfmt/blob/master/LICENSE
