@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-action.json
+---
+name: Install shfmt
+description: A GitHub Action to install the shfmt shell formatter with caching.
+author: kjanat
+branding: { icon: terminal, color: green }
+
+inputs:
+  version:
+    description: The shfmt version to install (e.g., "3.12.0"; defaults to "latest").
+    required: false
+    default: latest
+
+outputs:
+  version: { description: Installed shfmt version }
+  location: { description: Path to the installed shfmt binary }
+  cache-hit: { description: "Whether the shfmt binary was restored from tool-cache" }
+
+runs:
+  using: node24
+  main: dist/main.mjs
