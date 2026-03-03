@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Refactor release action: extract artifact download and commit parsing into separate modules (`artifact.mjs`, `parse.mjs`).
-
 ## [1.0.0] - 2026-03-02
 
 ### Added
@@ -22,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimal Actions runtime helpers replacing `@actions/core` to eliminate ~400 KB of transitive dependencies.
 - Action outputs: `version`, `location`, `cache-hit`.
 - Integration test script simulating the GitHub Actions runner environment.
+- CI workflow with typecheck, build, and integration test.
+- Composite release action triggered by `Release:` git trailer.
+- `CONTRIBUTING.md` with development and release instructions.
 
 [Unreleased]: https://github.com/kjanat/install-shfmt/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/kjanat/install-shfmt/releases/tag/v1.0.0
