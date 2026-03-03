@@ -28,7 +28,7 @@ A GitHub Action to install the [shfmt] shell formatter.
 ```yaml
 name: autofix.ci
 on:
-  push: { branches: ["main"] }
+  push: { branches: ["main", "master"] }
   pull_request:
 permissions: { contents: read }
 jobs:
@@ -62,4 +62,4 @@ jobs:
 <!-- links -->
 
 [shfmt]: https://github.com/mvdan/sh "mvdan/sh on GitHub"
-[MIT]: https://github.com/kjanat/install-shfmt/blob/master/LICENSE
+[MIT]: LICENSE
