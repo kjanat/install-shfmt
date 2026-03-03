@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Refactor release action: extract artifact download and commit parsing into separate modules (`artifact.mjs`, `parse.mjs`).
+
 ## [1.0.0] - 2026-03-02
 
 ### Added

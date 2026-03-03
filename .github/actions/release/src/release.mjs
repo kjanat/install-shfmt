@@ -1,5 +1,7 @@
-// @ts-check
 /** @typedef {import('@actions/github-script').AsyncFunctionArguments} Args */
+
+import { downloadArtifact, resolveEntrypoint } from './artifact.mjs';
+import { buildTagInfo, parseCommitMessage } from './parse.mjs';
 
 /**
  * Release pipeline: download dist artifact, commit it, create semver
@@ -11,73 +13,15 @@
  * @param {Args} args
  */
 export default async ({ github, context, core, exec }) => {
-	const fs = await import('node:fs');
-	const path = await import('node:path');
-
-	/**
-	 * @param {string} message
-	 * @returns {never}
-	 */
-	function fail(message) {
-		core.setFailed(message);
-		throw new Error(message);
-	}
-
 	// ── Download dist artifact built by ci job ───────────────────────
 	const artifactId = Number(process.env.ARTIFACT_ID);
-	const zip = await github.rest.actions.downloadArtifact({
-		owner: context.repo.owner,
-		repo: context.repo.repo,
-		artifact_id: artifactId,
-		archive_format: 'zip',
-	});
-	const zipPath = path.join(process.cwd(), 'dist-artifact.zip');
-	fs.writeFileSync(zipPath, Buffer.from(/** @type {ArrayBuffer} */ (zip.data)));
-	await exec.exec('unzip', ['-o', zipPath, '-d', 'dist']);
-	fs.unlinkSync(zipPath);
+	await downloadArtifact(github, context, exec, artifactId);
+	const entrypoint = resolveEntrypoint();
 
-	// ── Resolve build entrypoint from action.yml ─────────────────────
-	const actionYml = fs.readFileSync('action.yml', 'utf8');
-	const mainMatch = actionYml.match(/^\s*main:\s*(.+)$/m);
-	const entrypoint = mainMatch?.[1]?.trim();
-	if (!entrypoint) fail('No runs.main in action.yml');
-	if (!fs.existsSync(entrypoint)) fail(`Build artifact missing: ${entrypoint}`);
-
-	// ── Parse commit message ─────────────────────────────────────────
+	// ── Parse and validate before any mutations ──────────────────────
 	const msg = context.payload.head_commit?.message ?? '';
-	const lines = msg.split('\n');
-
-	const trailer = lines.find(
-		/** @param {string} l */ (l) => l.startsWith('Release: '),
-	);
-	if (!trailer) fail('No Release: trailer in commit message');
-	const version = trailer.slice('Release: '.length).trim();
-	if (!/^\d+\.\d+\.\d+$/.test(version)) fail(`Invalid semver: ${version}`);
-
-	const subject = lines[0] ?? '';
-
-	const blankIdx = lines.indexOf('');
-	const bodyLines = (blankIdx >= 0 ? lines.slice(blankIdx + 1) : []).filter(
-		/** @param {string} l */ (l) => !l.startsWith('Release: ') && l.trim() !== '',
-	);
-	const body = bodyLines.length > 0 ? bodyLines.join('\n') : subject;
-
-	// ── Validate tag message before any mutations ────────────────────
-	const [major, minor, patch] = version.split('.');
-	const tagExact = `v${major}.${minor}.${patch}`;
-	const tagMinor = `v${major}.${minor}`;
-	const tagMajor = `v${major}`;
-
-	const title = `${tagExact} \u2014 ${subject}`;
-	if (title.length > 50) fail(`Tag title is ${title.length} chars (max 50): ${title}`);
-
-	for (const [i, line] of body.split('\n').entries()) {
-		if (line.length > 72) {
-			fail(`Body line ${i + 1} is ${line.length} chars (max 72): ${line}`);
-		}
-	}
-
-	const tagMessage = `${title}\n\n${body}`;
+	const { version, subject, body } = parseCommitMessage(msg);
+	const { tagExact, tagMinor, tagMajor, tagMessage } = buildTagInfo(version, subject, body);
 
 	// ── Commit dist ──────────────────────────────────────────────────
 	await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']);
