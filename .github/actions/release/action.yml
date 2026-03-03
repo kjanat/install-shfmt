@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-action.json
+---
+name: Release
+description: Commit dist artifact, create semver tags, and push.
+inputs:
+  artifact-id:
+    description: Artifact ID from upload-artifact containing the dist build.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v8
+      env: { ARTIFACT_ID: "${{ inputs.artifact-id }}" }
+      with:
+        script: |
+          // Don't touch this, or you're dead!!!
+          const { default: release } = await import("${{ github.action_path }}/src/release.mjs")
+          await release({ github, context, core, exec })

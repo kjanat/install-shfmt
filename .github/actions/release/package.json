@@ -1,0 +1,13 @@
+{
+	"name": "release-action",
+	"type": "module",
+	"scripts": {
+		"typecheck": "tsgo --noEmit"
+	},
+	"devDependencies": {
+		"@actions/github-script": "catalog:",
+		"@types/node": "catalog:",
+		"@typescript/native-preview": "catalog:",
+		"typescript": "catalog:"
+	}
+}

@@ -100,7 +100,7 @@ export async function installShfmt(versionInput: string): Promise<{
 	const cachedDir = findCached('shfmt', version);
 	if (cachedDir) {
 		info(`Cache hit: shfmt ${version} from tool-cache`);
-		return finalize(join(cachedDir, binaryName), version, true);
+		return finalize(join(cachedDir, binaryName), true);
 	}
 
 	info('Cache miss: downloading shfmt');
@@ -120,13 +120,12 @@ export async function installShfmt(versionInput: string): Promise<{
 	}
 
 	const toolDir = cacheDir(tempDir, 'shfmt', version);
-	return finalize(join(toolDir, binaryName), version, false);
+	return finalize(join(toolDir, binaryName), false);
 }
 
 /** Add to PATH, set outputs, verify binary works. */
 function finalize(
 	binaryPath: string,
-	resolvedVersion: string,
 	cacheHit: boolean,
 ): { version: string; location: string; cacheHit: boolean } {
 	addPath(join(binaryPath, '..'));

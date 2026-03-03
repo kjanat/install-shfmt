@@ -2,79 +2,39 @@
 ---
 name: CI
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-
-permissions:
-  contents: read
+  push: { branches: [master] }
+  pull_request: { branches: [master] }
+permissions: { contents: read }
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    outputs: { artifact-id: "${{ steps.upload.outputs.artifact-id }}" }
     steps:
       - uses: actions/checkout@v6
-
       - uses: oven-sh/setup-bun@v2
-
       - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
+        with: { node-version: "24" }
       - run: bun install --frozen-lockfile
+      - run: bun typecheck
+      - run: bun run build
+      - run: bash test/integration.sh
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        id: upload
+        uses: actions/upload-artifact@v7
+        with: { path: dist, retention-days: 1 }
 
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Build
-        run: bun run build
-
-      - name: Integration test
-        run: bash test/integration.sh
-
-      # Release: commit dist/main.mjs, tag, and push when the
-      # commit body contains "Release: X.Y.Z".
-      - name: Check for release trigger
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        id: release
-        run: |
-          VERSION="$(git log -1 --format='%b' | grep -oP '^Release: \K\S+' || true)"
-          if [ -n "${VERSION}" ]; then
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Release
-        if: steps.release.outputs.found == 'true'
-        env:
-          VERSION: ${{ steps.release.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Commit dist
-          git add -f dist/main.mjs
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(release): rebuild dist"
-          fi
-
-          # Tag message from commit subject; body from commit body
-          # (excluding the Release: trailer).
-          SUBJECT="$(git log -1 --skip=1 --format='%s')"
-          BODY="$(git log -1 --skip=1 --format='%b' | grep -v '^Release: ' | sed '/^$/d')"
-          if [ -z "${BODY}" ]; then
-            BODY="${SUBJECT}"
-          fi
-
-          # Push commit, then tag and push tags
-          git pull --rebase origin master
-          git push origin master
-          scripts/tag-release.sh "${VERSION}" \
-            -m "${SUBJECT}" \
-            -b "${BODY}" \
-            --no-sign --push
+  release:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    if: >-
+      github.event_name == 'push'
+      && contains(
+           github.event.head_commit.message,
+           format('{0}Release: ', fromJSON('"\n"'))
+         )
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/release
+        with: { artifact-id: "${{ needs.ci.outputs.artifact-id }}" }
