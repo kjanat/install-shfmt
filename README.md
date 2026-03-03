@@ -1,5 +1,7 @@
 # Install shfmt
 
+[![CI](https://github.com/kjanat/install-shfmt/actions/workflows/ci.yml/badge.svg)](https://github.com/kjanat/install-shfmt/actions/workflows/ci.yml)
+
 A GitHub Action to install the [shfmt] shell formatter.
 
 ## Usage
