@@ -62,26 +62,7 @@ export default async ({ github, context, core, exec }) => {
 	);
 	const body = bodyLines.length > 0 ? bodyLines.join('\n') : subject;
 
-	// ── Commit dist ──────────────────────────────────────────────────
-	await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']);
-	await exec.exec('git', [
-		'config',
-		'user.email',
-		'41898282+github-actions[bot]@users.noreply.github.com',
-	]);
-
-	await exec.exec('git', ['add', '-f', entrypoint]);
-	const { exitCode } = await exec.getExecOutput('git', ['diff', '--cached', '--quiet'], {
-		ignoreReturnCode: true,
-	});
-	if (exitCode !== 0) {
-		await exec.exec('git', ['commit', '-m', 'chore(release): rebuild dist']);
-	}
-
-	await exec.exec('git', ['pull', '--rebase', 'origin', 'master']);
-	await exec.exec('git', ['push', 'origin', 'master']);
-
-	// ── Create tags ──────────────────────────────────────────────────
+	// ── Validate tag message before any mutations ────────────────────
 	const [major, minor, patch] = version.split('.');
 	const tagExact = `v${major}.${minor}.${patch}`;
 	const tagMinor = `v${major}.${minor}`;
@@ -98,6 +79,26 @@ export default async ({ github, context, core, exec }) => {
 
 	const tagMessage = `${title}\n\n${body}`;
 
+	// ── Commit dist ──────────────────────────────────────────────────
+	await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']);
+	await exec.exec('git', [
+		'config',
+		'user.email',
+		'41898282+github-actions[bot]@users.noreply.github.com',
+	]);
+
+	await exec.exec('git', ['add', '-f', entrypoint]);
+	const { exitCode } = await exec.getExecOutput('git', ['diff', '--cached', '--quiet'], {
+		ignoreReturnCode: true,
+	});
+	if (exitCode !== 0) {
+		await exec.exec('git', ['commit', '-m', 'chore(release): rebuild dist']);
+	}
+
+	await exec.exec('git', ['pull', '--ff-only', 'origin', 'master']);
+	await exec.exec('git', ['push', 'origin', 'master']);
+
+	// ── Create and push tags ─────────────────────────────────────────
 	await exec.exec('git', ['tag', '-a', '-m', tagMessage, tagExact]);
 	core.info(`Created ${tagExact} (annotated, unsigned)`);
 
@@ -107,11 +108,11 @@ export default async ({ github, context, core, exec }) => {
 	await exec.exec('git', ['tag', '-f', tagMajor]);
 	core.info(`Created ${tagMajor} (lightweight)`);
 
+	await exec.exec('git', ['push', 'origin', `refs/tags/${tagExact}`]);
 	await exec.exec('git', [
 		'push',
 		'origin',
 		'-f',
-		`refs/tags/${tagExact}`,
 		`refs/tags/${tagMinor}`,
 		`refs/tags/${tagMajor}`,
 	]);
